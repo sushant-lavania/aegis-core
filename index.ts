@@ -1,15 +1,18 @@
 class TrackerInstance {
-  apiKey: string;
+  apiKey: string | null;
+  engineURL: string | null;
   buffer: any[];
 
-  constructor(apiKey: string) {
-    this.apiKey = apiKey;
-    if (!apiKey) {
-      throw new Error("API key is required to create an instance");
+  constructor(apiKey?: string, engineURL?: string) {
+    if ((apiKey && engineURL) || (!apiKey && !engineURL)) {
+      throw new Error("Either apiKey or engineURL must be provided, but not both.");
     }
 
+    this.apiKey = apiKey || null;
+    this.engineURL = engineURL || null;
+
     this.buffer = []; // Buffer all the data
-    console.log(`Tracker initialized with API Key: ${this.apiKey}`);
+    console.log(`Tracker initialized with ${this.apiKey ? `API Key: ${this.apiKey}` : `Engine URL: ${this.engineURL}`}`);
   }
 
   // Save data to localStorage/sessionStorage
@@ -190,32 +193,45 @@ class TrackerInstance {
   }
 
   // Send the buffer data to backend
-  sendToBackend() {
+  async sendToBackend() {
+      let reply ={}
       const storedData = localStorage.getItem("userTrackingData");
-      console.log("Stored data:", storedData);
+    console.log("Stored data:", storedData);
+  
+    let url = "https://aegis-india.vercel.app/api/infer?apiKey=" + this.apiKey;
+
+    if (this.engineURL) {
+      url = this.engineURL;
+    }
+
     if (storedData) {
-      fetch("https://your-backend-endpoint.com/track", {
+      await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: storedData,
       })
-        .then((response) => response.json())
+        .then((response) => {return response.json();})
         .then((data) => {
+          reply = data;
           console.log("Data successfully sent:", data);
-          localStorage.removeItem("userTrackingData"); // Clear localStorage once data is sent
+          localStorage.removeItem("userTrackingData");
+          return data;// Clear localStorage once data is sent
         })
         .catch((error) => {
+          reply = {error: error};
           console.error("Error sending data:", error);
         });
     }
+    console.log("Reply:", reply); 
+    return reply;
   }
 }
 
 // Factory function to create a tracker instance
-function createTrackerInstance(apiKey: string) {
-  return new TrackerInstance(apiKey);
+function createTrackerInstance({ apiKey, engineURL }: { apiKey?: string; engineURL?: string }) {
+  return new TrackerInstance(apiKey, engineURL);
 }
 
 export { createTrackerInstance };
