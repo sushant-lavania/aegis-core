@@ -1,13 +1,14 @@
 class TrackerInstance {
   apiKey: string;
-buffer: any[];
+  buffer: any[];
+
   constructor(apiKey: string) {
     this.apiKey = apiKey;
     if (!apiKey) {
       throw new Error("API key is required to create an instance");
     }
 
-    this.buffer = []; // This will buffer all the data
+    this.buffer = []; // Buffer all the data
     console.log(`Tracker initialized with API Key: ${this.apiKey}`);
   }
 
@@ -17,7 +18,7 @@ buffer: any[];
   }
 
   // Add data to buffer and persist it
-  addToBuffer(data:any) {
+  addToBuffer(data: any) {
     this.buffer.push(data);
     this.saveToStorage(); // Persist the data in localStorage
   }
@@ -27,10 +28,7 @@ buffer: any[];
     let lastTimestamp: number | null = null;
     let lastPosition = { x: 0, y: 0 };
 
-    // Registering the event listener properly
     document.addEventListener("mousemove", (e) => {
-      console.log("Mouse moved:", e.clientX, e.clientY); // Confirm the event handler is firing
-
       const now = Date.now();
       const x = e.clientX;
       const y = e.clientY;
@@ -52,7 +50,7 @@ buffer: any[];
           timestamp: now,
         };
 
-        this.addToBuffer(data); // Add the data to the buffer
+        this.addToBuffer(data); // Add data to buffer
       }
 
       lastTimestamp = now;
@@ -87,13 +85,109 @@ buffer: any[];
           count: timing.count,
           timestamp: Date.now(),
         };
-        this.addToBuffer(data); // Add the data to the buffer
+        this.addToBuffer(data); // Add data to buffer
         delete keyTimings[e.key];
       }
     });
   }
 
-  // Track other events similarly and buffer the data
+  // Track Browser Properties
+  getBrowserProperties() {
+    const userAgent = navigator.userAgent;
+    const windowSize = { width: window.innerWidth, height: window.innerHeight };
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    const data = {
+      event: "browserProperties",
+      userAgent,
+      windowSize,
+      timezone,
+      apiKey: this.apiKey,
+      timestamp: Date.now(),
+    };
+
+    this.addToBuffer(data); // Add data to buffer
+  }
+
+  // Track Device Information
+  getDeviceInfo() {
+    const screenWidth = screen.width;
+    const screenHeight = screen.height;
+    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+
+    const data = {
+      event: "deviceInfo",
+      screenWidth,
+      screenHeight,
+      isMobile,
+      apiKey: this.apiKey,
+      timestamp: Date.now(),
+    };
+
+    this.addToBuffer(data); // Add data to buffer
+  }
+
+  // Track Network Details
+  getNetworkDetails() {
+    const connection = (navigator as any).connection || 
+                       (navigator as any).mozConnection || 
+                       (navigator as any).webkitConnection;
+  
+    if (connection) {
+      const { effectiveType, rtt, downlink } = connection;
+  
+      const data = {
+        event: "networkDetails",
+        effectiveType,
+        rtt,
+        downlink,
+        apiKey: this.apiKey,
+        timestamp: Date.now(),
+      };
+  
+      this.addToBuffer(data); // Add data to buffer
+    }
+  }
+  
+
+  // Track Touch Gestures (for Mobile)
+  trackTouchGestures() {
+    document.addEventListener("touchstart", (e) => {
+      const touch = e.touches[0];
+      const data = {
+        event: "touchstart",
+        x: touch.clientX,
+        y: touch.clientY,
+        apiKey: this.apiKey,
+        timestamp: Date.now(),
+      };
+
+      this.addToBuffer(data); // Add data to buffer
+    });
+
+    document.addEventListener("touchmove", (e) => {
+      const touch = e.touches[0];
+      const data = {
+        event: "touchmove",
+        x: touch.clientX,
+        y: touch.clientY,
+        apiKey: this.apiKey,
+        timestamp: Date.now(),
+      };
+
+      this.addToBuffer(data); // Add data to buffer
+    });
+
+    document.addEventListener("touchend", () => {
+      const data = {
+        event: "touchend",
+        apiKey: this.apiKey,
+        timestamp: Date.now(),
+      };
+
+      this.addToBuffer(data); // Add data to buffer
+    });
+  }
 
   // Send the buffer data to backend
   sendToBackend() {
@@ -110,8 +204,7 @@ buffer: any[];
         .then((response) => response.json())
         .then((data) => {
           console.log("Data successfully sent:", data);
-          // Clear localStorage once data is sent
-          localStorage.removeItem("userTrackingData");
+          localStorage.removeItem("userTrackingData"); // Clear localStorage once data is sent
         })
         .catch((error) => {
           console.error("Error sending data:", error);
@@ -121,7 +214,7 @@ buffer: any[];
 }
 
 // Factory function to create a tracker instance
-function createTrackerInstance(apiKey:string) {
+function createTrackerInstance(apiKey: string) {
   return new TrackerInstance(apiKey);
 }
 
