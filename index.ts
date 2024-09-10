@@ -198,7 +198,7 @@ class TrackerInstance {
       const storedData = localStorage.getItem("userTrackingData");
     console.log("Stored data:", storedData);
   
-    let url = "https://aegis-india.vercel.app/api/infer?apiKey=" + this.apiKey;
+    let url = "http://localhost:3000/api/infer?apiKey=" + this.apiKey;
 
     if (this.engineURL) {
       url = this.engineURL;
@@ -207,22 +207,18 @@ class TrackerInstance {
     if (storedData) {
       await fetch(url, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: storedData,
       })
-        .then((response) => {return response.json();})
+        .then((response) => {
+          console.log(response)
+          return response.json();
+        }
+      )  // Remove duplicate
         .then((data) => {
           reply = data;
           console.log("Data successfully sent:", data);
           localStorage.removeItem("userTrackingData");
-          return data;// Clear localStorage once data is sent
         })
-        .catch((error) => {
-          reply = {error: error};
-          console.error("Error sending data:", error);
-        });
     }
     console.log("Reply:", reply); 
     return reply;

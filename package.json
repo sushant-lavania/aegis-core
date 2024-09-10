@@ -1,7 +1,7 @@
 {
-  "name": "aegis-core",
+  "name": "@algoholics/aegis-core",
   "license": "MIT",
-  "version": "1.0.0",
+  "version": "1.0.5",
   "description": "Aegis Core",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
